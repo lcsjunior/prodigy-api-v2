@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { default: axiosRetry } = require('axios-retry');
-const { parseJSON } = require('date-fns');
+const { parseJSON, sub, format } = require('date-fns');
 const _ = require('lodash');
 const Papa = require('papaparse');
 
@@ -8,6 +8,8 @@ const instance = axios.create({
   baseURL: process.env.THINGSPEAK_API_URL,
 });
 axiosRetry(instance, { retries: 3 });
+
+const tsDateFormat = "yyyy-MM-dd'T'HH:mm:ss.000xxx";
 
 const prepareEntryData = (obj = {}) => {
   for (const key in obj) {
@@ -122,6 +124,72 @@ const fetchChannelFeeds = async ({ channels, params }) => {
   return ret;
 };
 
+const iterateFetchChannelFeeds = async ({
+  channels,
+  options,
+  onRead = async () => {},
+}) => {
+  const iterateCall = async (resolve, reject, channel, next) => {
+    try {
+      const reqCounter = (next.reqCounter || 0) + 1;
+      const params = {
+        results: _.min([next.recordsLimit, 8000]),
+        start: format(next.start, tsDateFormat),
+        end: format(next.end, tsDateFormat),
+        timescale: options.timescale,
+        round: options.round || 1,
+      };
+      const [{ data }] = await fetchChannelFeeds({
+        channels: [channel],
+        params,
+      });
+      await onRead({
+        id: channel.channelId,
+        data,
+      });
+      const minEntry = _.minBy(data, 'created_at');
+      const lastEntry =
+        reqCounter === 1 ? _.maxBy(data, 'created_at') : next.lastEntry;
+      const ret = {
+        ...next,
+        reqCounter,
+        recordsLimit: next.recordsLimit - data.length,
+        end: sub(minEntry?.created_at || next.end, { seconds: 1 }),
+        minEntry,
+        lastEntry,
+      };
+      if (ret.start < ret.end && data.length > 0 && ret.recordsLimit > 0) {
+        iterateCall(resolve, reject, channel, ret);
+      } else {
+        resolve({ channel, ret });
+      }
+    } catch (err) {
+      reject(err);
+    }
+  };
+  const chs = _.uniqWith(channels, _.isEqual);
+  const promises = chs
+    .filter((channel) => channel.channelId)
+    .map((channel) => {
+      return new Promise((resolve, reject) =>
+        iterateCall(resolve, reject, channel, {
+          id: channel.channelId,
+          recordsLimit: options.recordsLimit || 1000,
+          start: options.start,
+          end: options.end,
+        })
+      );
+    });
+  const result = await Promise.allSettled(promises);
+  const ret = result.reduce((acc, resp) => {
+    if (resp.status === 'fulfilled') {
+      return [...acc, resp.value];
+    }
+    return acc;
+  }, []);
+  return ret;
+};
+
 const retrieveChannelData = async (records) => {
   const results = await fetchChannelData({
     channels: records.map(({ channelId, readApiKey }) => ({
@@ -138,10 +206,45 @@ const retrieveChannelData = async (records) => {
   });
 };
 
+const retrieveChannelDataAndLastEntry = async (records) => {
+  const results = await fetchChannelDataAndLastEntry({
+    channels: records.map(({ channelId, readApiKey }) => ({
+      channelId,
+      apiKey: readApiKey,
+    })),
+  });
+  return records.map((record) => {
+    const result = results.find((r) => r.data.id === record.channelId);
+    return {
+      ...record,
+      ...result,
+    };
+  });
+};
+
+const retrieveChannelFeeds = async (records) => {
+  const results = await fetchChannelFeeds({
+    channels: records.map(({ channelId, readApiKey }) => ({
+      channelId,
+      apiKey: readApiKey,
+    })),
+  });
+  return records.map((record) => {
+    const feeds = results.find((r) => r.id === record.channelId);
+    return {
+      ...record,
+      feeds,
+    };
+  });
+};
+
 module.exports = {
   fetchChannelData,
   fetchChannelLastEntry,
   fetchChannelDataAndLastEntry,
   fetchChannelFeeds,
+  iterateFetchChannelFeeds,
   retrieveChannelData,
+  retrieveChannelDataAndLastEntry,
+  retrieveChannelFeeds,
 };
