@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { login, logout, show } = require('../controllers/auth');
 const { passport, isAuthenticated } = require('../config/passport');
+const { login, logout, show } = require('../controllers/auth');
 
 router.get('/user', isAuthenticated, show);
 

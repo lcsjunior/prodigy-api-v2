@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Channel = require('./Channel');
 const bcrypt = require('bcrypt');
 
 const saltRounds = 10;
@@ -24,6 +25,12 @@ userSchema.pre('save', async function (next) {
   if (user.isModified('password')) {
     user.password = await bcrypt.hash(user.password, saltRounds);
   }
+  next();
+});
+
+userSchema.pre('deleteMany', async function (next) {
+  const deletedData = await User.find(this._conditions).lean();
+  await Channel.deleteMany({ user: { $in: deletedData } });
   next();
 });
 

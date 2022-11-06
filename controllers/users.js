@@ -87,15 +87,15 @@ const show = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { params, body } = req;
-    const user = await User.findByIdAndUpdate(
-      params.id,
+    const result = await User.updateOne(
+      { _id: params.id },
       {
         firstName: body.firstName,
         lastName: body.lastName,
       },
       { new: true }
     );
-    res.json(user);
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -104,8 +104,8 @@ const update = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const { params } = req;
-    const deleted = await User.findByIdAndDelete(params.id);
-    res.json({ deleted });
+    const result = await User.deleteOne({ _id: params.id });
+    res.json(result);
   } catch (err) {
     next(err);
   }
