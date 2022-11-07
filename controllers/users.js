@@ -47,7 +47,7 @@ const canDelete = ({ user, params }) => {
 
 const list = async (req, res, next) => {
   try {
-    const users = await User.find();
+    const users = await User.find().lean();
     res.json(users);
   } catch (err) {
     next(err);
@@ -58,8 +58,7 @@ const create = async (req, res, next) => {
   try {
     const { body } = req;
     const newUser = await User.create({
-      firstName: body.firstName,
-      lastName: body.lastName,
+      fullName: body.fullName,
       email: body.email,
       username: body.username,
       password: body.password,
@@ -90,8 +89,7 @@ const update = async (req, res, next) => {
     const result = await User.updateOne(
       { _id: params.id },
       {
-        firstName: body.firstName,
-        lastName: body.lastName,
+        fullName: body.fullName,
       },
       { new: true }
     );

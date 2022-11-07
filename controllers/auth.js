@@ -1,11 +1,12 @@
 const show = (req, res, next) => {
   const {
-    user: { username, firstName, lastName },
+    user: { username, firstName, lastName, fullName },
   } = req;
   return res.json({
     username,
     firstName,
     lastName,
+    fullName,
   });
 };
 

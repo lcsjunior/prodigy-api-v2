@@ -1,7 +1,7 @@
 #!/usr/bin/node
 
 const { mongoose } = require('./config/mongo');
-const { User, Channel } = require('./models');
+const { User, Channel, WidgetType } = require('./models');
 const bcrypt = require('bcrypt');
 
 const saltRounds = 10;
@@ -26,32 +26,59 @@ const seedChannels = [
   },
 ];
 
+const seedWidgetTypes = [
+  {
+    name: 'Time series',
+    slug: 'time-series',
+    sortOrder: 1,
+  },
+  {
+    name: 'Gauge',
+    slug: 'gauge',
+    sortOrder: 2,
+  },
+];
+
 (async () => {
   try {
-    await User.deleteMany({
-      username: { $in: seedUsers.map(({ username }) => username) },
-    });
-
-    const aSeedUsers = await Promise.all(
+    const asSeedUsers = await Promise.all(
       seedUsers.map(async (user) => ({
         ...user,
         password: await bcrypt.hash(user.password, saltRounds),
       }))
     );
-    await User.insertMany(aSeedUsers);
-
-    const saUser = await User.findByUsername('sa');
-    await Channel.insertMany(
-      seedChannels.map((channel) => ({
-        ...channel,
-        user: saUser.id,
-      }))
+    await Promise.all(
+      asSeedUsers.map((user) =>
+        User.findOneAndUpdate({ email: user.email }, user, {
+          upsert: true,
+        })
+      )
     );
 
-    mongoose.connection.close();
-    console.log('Seeder successfully executed');
+    const saUser = await User.findByUsername('sa');
+    await Promise.all(
+      seedChannels.map((channel) =>
+        Channel.findOneAndUpdate(
+          { user: saUser.id, channelId: channel.channelId },
+          { ...channel, user: saUser.id },
+          {
+            upsert: true,
+          }
+        )
+      )
+    );
+
+    await Promise.all(
+      seedWidgetTypes.map((widgetTypes) =>
+        WidgetType.findOneAndUpdate({ name: widgetTypes.name }, widgetTypes, {
+          upsert: true,
+        })
+      )
+    );
   } catch (err) {
     console.error(err);
   }
+  mongoose.connection.close();
+  console.log('Seeder successfully executed');
   process.exit();
 })();

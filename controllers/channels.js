@@ -1,5 +1,23 @@
-const { retrieveChannelData } = require('../libs/thingspeak-api');
+const {
+  retrieveChannelData,
+  retrieveChannelFeeds,
+  retrieveChannelDataAndLastEntry,
+} = require('../libs/thingspeak-api');
 const { Channel } = require('../models');
+
+const isOwnerChannel = async (req, res, next) => {
+  // const { user, query } = req;
+  // const channel = await Channel.findOne({
+  //   raw: true,
+  //   attributes: ['id', 'userId'],
+  //   where: { id: query.chId, userId: user.id },
+  // });
+  // if (channel) {
+  //   next();
+  // } else {
+  //   res.sendStatus(403);
+  // }
+};
 
 const list = async (req, res, next) => {
   try {
@@ -22,6 +40,29 @@ const create = async (req, res, next) => {
       writeApiKey: body.writeApiKey,
     });
     res.status(201).json(newChannel);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const showDashboard = async (req, res, next) => {
+  try {
+    const { user, params } = req;
+    let channel = await Channel.findOne({
+      _id: params.id,
+      user,
+    }).lean();
+    if (channel) {
+      const results = await Promise.all([
+        retrieveChannelDataAndLastEntry([channel]),
+        retrieveChannelFeeds([channel]),
+      ]);
+      [channel] = results[0];
+      channel = { ...channel, feeds: results[1][0].feeds };
+      return res.json(channel);
+    } else {
+      res.sendStatus(204);
+    }
   } catch (err) {
     next(err);
   }
@@ -92,8 +133,10 @@ const remove = async (req, res, next) => {
 };
 
 module.exports = {
+  isOwnerChannel,
   list,
   create,
+  showDashboard,
   show,
   bulkUpdate,
   update,

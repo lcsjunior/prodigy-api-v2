@@ -10,6 +10,7 @@ const {
   update,
   remove,
   bulkUpdate,
+  showDashboard,
 } = require('../controllers/channels');
 
 router.get('/', isAuthenticated, list);
@@ -19,6 +20,13 @@ router.post(
   isAuthenticated,
   validateAsync(body('channelId').isInt().toInt()),
   create
+);
+
+router.get(
+  '/:id/dashboard',
+  isAuthenticated,
+  validateAsync(param('id').isMongoId()),
+  showDashboard
 );
 
 router.get(

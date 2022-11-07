@@ -17,8 +17,21 @@ const userSchema = new mongoose.Schema(
       default: 'user',
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
+
+userSchema
+  .virtual('fullName')
+  .get(function () {
+    return `${this.firstName || ''} ${this.lastName || ''}`.trim();
+  })
+  .set(function (v) {
+    const firstName = v.substring(0, v.indexOf(' '));
+    const lastName = v.substring(v.indexOf(' ') + 1);
+    this.set({ firstName, lastName });
+  });
 
 userSchema.pre('save', async function (next) {
   const user = this;
@@ -28,7 +41,7 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.pre('deleteMany', async function (next) {
+userSchema.pre('deleteOne', async function (next) {
   const deletedData = await User.find(this._conditions).lean();
   await Channel.deleteMany({ user: { $in: deletedData } });
   next();
@@ -47,6 +60,7 @@ userSchema.statics.findByUsername = async function (username) {
 };
 
 userSchema.set('toJSON', {
+  virtuals: true,
   transform: (doc, ret, opt) => {
     delete ret['password'];
   },

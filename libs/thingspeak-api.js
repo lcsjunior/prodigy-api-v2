@@ -233,7 +233,7 @@ const retrieveChannelFeeds = async (records) => {
     const feeds = results.find((r) => r.id === record.channelId);
     return {
       ...record,
-      feeds,
+      feeds: feeds.data,
     };
   });
 };
