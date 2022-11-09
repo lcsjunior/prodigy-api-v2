@@ -44,6 +44,7 @@ router.patch(
   '/bulk',
   isAuthenticated,
   validateAsync(query('chId').isMongoId()),
+  isOwnerChannel,
   bulkUpdate
 );
 
