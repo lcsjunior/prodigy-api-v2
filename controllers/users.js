@@ -90,8 +90,7 @@ const update = async (req, res, next) => {
       { _id: params.id },
       {
         fullName: body.fullName,
-      },
-      { new: true }
+      }
     );
     res.json(result);
   } catch (err) {

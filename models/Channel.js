@@ -9,6 +9,7 @@ const channelSchema = new mongoose.Schema(
     writeApiKey: String,
     sortOrder: Number,
     user: { type: SchemaTypes.ObjectId, ref: 'User', required: true },
+    widgets: { type: SchemaTypes.ObjectId, ref: 'Widget' },
   },
   { timestamps: true }
 );

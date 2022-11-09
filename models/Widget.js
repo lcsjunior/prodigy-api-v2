@@ -9,8 +9,17 @@ const fieldSchema = new mongoose.Schema(
       max: 8,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: false,
+    toJSON: {
+      virtuals: true,
+    },
+  }
 );
+
+fieldSchema.virtual('key').get(function () {
+  return `field${this.id}`;
+});
 
 const widgetSchema = new mongoose.Schema(
   {
@@ -21,6 +30,18 @@ const widgetSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+widgetSchema.pre('save', async function (next) {
+  const widget = this;
+  if (widget.isNew) {
+    const lastWidget = await Widget.findOne(
+      { user: widget.user },
+      'sortOrder'
+    ).sort('-sortOrder');
+    widget.sortOrder = (lastWidget?.sortOrder || 0) + 1;
+  }
+  next();
+});
 
 const Widget = mongoose.model('Widget', widgetSchema);
 module.exports = Widget;

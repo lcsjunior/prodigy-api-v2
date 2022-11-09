@@ -6,17 +6,16 @@ const {
 const { Channel } = require('../models');
 
 const isOwnerChannel = async (req, res, next) => {
-  // const { user, query } = req;
-  // const channel = await Channel.findOne({
-  //   raw: true,
-  //   attributes: ['id', 'userId'],
-  //   where: { id: query.chId, userId: user.id },
-  // });
-  // if (channel) {
-  //   next();
-  // } else {
-  //   res.sendStatus(403);
-  // }
+  const { user, query } = req;
+  const channel = await Channel.findOne({
+    user,
+    _id: query.chId,
+  });
+  if (channel) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
 };
 
 const list = async (req, res, next) => {
@@ -39,6 +38,7 @@ const create = async (req, res, next) => {
       readApiKey: body.readApiKey,
       writeApiKey: body.writeApiKey,
     });
+    req.params['id'] = newChannel.id;
     res.status(201).json(newChannel);
   } catch (err) {
     next(err);
@@ -102,7 +102,7 @@ const bulkUpdate = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { user, params, body } = req;
-    const channel = await Channel.findOneAndUpdate(
+    const result = await Channel.updateOne(
       {
         _id: params.id,
         user,
@@ -110,10 +110,9 @@ const update = async (req, res, next) => {
       {
         readApiKey: body.readApiKey,
         writeApiKey: body.writeApiKey,
-      },
-      { new: true }
+      }
     );
-    res.json(channel);
+    res.json(result);
   } catch (err) {
     next(err);
   }
