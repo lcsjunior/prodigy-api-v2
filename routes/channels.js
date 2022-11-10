@@ -12,6 +12,7 @@ const {
   bulkUpdate,
   showDashboard,
   eventsHandler,
+  pollHandler,
 } = require('../controllers/channels');
 
 router.get('/', isAuthenticated, list);
@@ -21,6 +22,13 @@ router.post(
   isAuthenticated,
   validateAsync(body('channelId').isInt().toInt()),
   create
+);
+
+router.get(
+  '/:id/poll',
+  isAuthenticated,
+  validateAsync(param('id').isMongoId()),
+  pollHandler
 );
 
 router.get(

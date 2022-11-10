@@ -13,6 +13,7 @@ const sseResponseHeaders = {
   Connection: 'keep-alive',
   'Cache-Control': 'no-cache',
 };
+const clients = new Set();
 
 const isOwnerChannel = async (req, res, next) => {
   const { user, query } = req;
@@ -54,8 +55,31 @@ const create = async (req, res, next) => {
   }
 };
 
+const pollHandler = async (req, res, next) => {
+  try {
+    const { user, query, params } = req;
+    let channel = await Channel.findOne({
+      _id: params.id,
+      user,
+    }).lean();
+    if (channel) {
+      [channel] = await retrieveChannelFeeds([channel], {
+        start: query?.lastEntryAt,
+      });
+      return res.json(channel.feeds);
+    } else {
+      res.sendStatus(204);
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
 const eventsHandler = (req, res, next) => {
   res.writeHead(200, sseResponseHeaders);
+
+  const client = { res };
+  clients.add(client);
 
   const { user, params, query } = req;
   const controller = new AbortController();
@@ -98,6 +122,8 @@ const eventsHandler = (req, res, next) => {
   req.on('close', async () => {
     controller.abort();
     await clearIntervalAsync(timer);
+    client.res.end();
+    clients.delete(client);
     console.log('Connection closed');
   });
 };
@@ -192,6 +218,7 @@ module.exports = {
   isOwnerChannel,
   list,
   create,
+  pollHandler,
   eventsHandler,
   showDashboard,
   show,
