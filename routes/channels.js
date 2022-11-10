@@ -11,6 +11,7 @@ const {
   remove,
   bulkUpdate,
   showDashboard,
+  eventsHandler,
 } = require('../controllers/channels');
 
 router.get('/', isAuthenticated, list);
@@ -20,6 +21,13 @@ router.post(
   isAuthenticated,
   validateAsync(body('channelId').isInt().toInt()),
   create
+);
+
+router.get(
+  '/:id/events',
+  isAuthenticated,
+  validateAsync(param('id').isMongoId()),
+  eventsHandler
 );
 
 router.get(

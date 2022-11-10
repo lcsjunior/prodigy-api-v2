@@ -11,6 +11,7 @@ const fieldSchema = new mongoose.Schema(
   },
   {
     timestamps: false,
+    _id: false,
     toJSON: {
       virtuals: true,
     },

@@ -90,7 +90,7 @@ const fetchChannelDataAndLastEntry = async ({ channels }) => {
   return ret;
 };
 
-const fetchChannelFeeds = async ({ channels, params }) => {
+const fetchChannelFeeds = async ({ channels, params, controller }) => {
   const chs = _.uniqWith(channels, _.isEqual);
   const promises = chs
     .filter((channel) => channel.channelId)
@@ -105,6 +105,7 @@ const fetchChannelFeeds = async ({ channels, params }) => {
         extraParams: {
           id: channel.channelId,
         },
+        signal: controller?.signal,
       });
     });
   const results = await Promise.allSettled(promises);
@@ -222,18 +223,20 @@ const retrieveChannelDataAndLastEntry = async (records) => {
   });
 };
 
-const retrieveChannelFeeds = async (records) => {
+const retrieveChannelFeeds = async (records, params, controller) => {
   const results = await fetchChannelFeeds({
     channels: records.map(({ channelId, readApiKey }) => ({
       channelId,
       apiKey: readApiKey,
     })),
+    params,
+    controller,
   });
   return records.map((record) => {
     const feeds = results.find((r) => r.id === record.channelId);
     return {
       ...record,
-      feeds: feeds.data,
+      feeds: feeds?.data,
     };
   });
 };

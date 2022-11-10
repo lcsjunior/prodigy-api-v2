@@ -4,6 +4,15 @@ const {
   retrieveChannelDataAndLastEntry,
 } = require('../libs/thingspeak-api');
 const { Channel } = require('../models');
+const _ = require('lodash');
+const { addSeconds } = require('date-fns');
+const { setIntervalAsync, clearIntervalAsync } = require('set-interval-async');
+
+const sseResponseHeaders = {
+  'Content-Type': 'text/event-stream',
+  Connection: 'keep-alive',
+  'Cache-Control': 'no-cache',
+};
 
 const isOwnerChannel = async (req, res, next) => {
   const { user, query } = req;
@@ -43,6 +52,54 @@ const create = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+const eventsHandler = (req, res, next) => {
+  res.writeHead(200, sseResponseHeaders);
+
+  const { user, params, query } = req;
+  const controller = new AbortController();
+  const timeoutMs = 5000;
+  let lastEntryAt = query?.lastEntryAt;
+  let channel;
+
+  const feedData = async () => {
+    try {
+      if (!channel) {
+        channel = await Channel.findOne({
+          _id: params.id,
+          user,
+        }).lean();
+      }
+      if (channel) {
+        [channel] = await retrieveChannelFeeds(
+          [channel],
+          {
+            start: lastEntryAt,
+          },
+          controller
+        );
+        if (channel?.feeds && channel.feeds.length > 0) {
+          lastEntryAt = addSeconds(
+            _.maxBy(channel.feeds, 'created_at').created_at,
+            1
+          );
+          const strJson = JSON.stringify(channel.feeds);
+          const data = `data: ${strJson}\n\n`;
+          res.write(data);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const timer = setIntervalAsync(feedData, timeoutMs);
+
+  req.on('close', async () => {
+    controller.abort();
+    await clearIntervalAsync(timer);
+    console.log('Connection closed');
+  });
 };
 
 const showDashboard = async (req, res, next) => {
@@ -135,6 +192,7 @@ module.exports = {
   isOwnerChannel,
   list,
   create,
+  eventsHandler,
   showDashboard,
   show,
   bulkUpdate,
