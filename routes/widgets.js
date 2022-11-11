@@ -29,7 +29,7 @@ router.post(
   isAuthenticated,
   validateAsync([query('chId').isMongoId(), body('type').not().isEmpty()]),
   isOwnerChannel,
-  create
+  [create, show]
 );
 
 router.get(
@@ -53,7 +53,7 @@ router.patch(
   isAuthenticated,
   validateAsync([param('id').isMongoId(), query('chId').isMongoId()]),
   isOwnerChannel,
-  update
+  [update, show]
 );
 
 router.delete(

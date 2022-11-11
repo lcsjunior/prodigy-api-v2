@@ -1,8 +1,9 @@
 #!/usr/bin/node
 
 const { mongoose } = require('./config/mongo');
-const { User, Channel, WidgetType } = require('./models');
+const { User, Channel, WidgetType, Widget } = require('./models');
 const bcrypt = require('bcrypt');
+const argv = require('minimist')(process.argv.slice(2));
 
 const saltRounds = 10;
 
@@ -41,6 +42,13 @@ const seedWidgetTypes = [
 
 (async () => {
   try {
+    // npm run seed -- -d
+    if (argv.d) {
+      await Widget.deleteMany({});
+      await Channel.deleteMany({});
+      await User.deleteMany({});
+    }
+
     const asSeedUsers = await Promise.all(
       seedUsers.map(async (user) => ({
         ...user,

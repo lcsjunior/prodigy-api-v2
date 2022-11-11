@@ -13,7 +13,7 @@ const sseResponseHeaders = {
   Connection: 'keep-alive',
   'Cache-Control': 'no-cache',
 };
-const clients = new Set();
+const subscribers = new Set();
 
 const isOwnerChannel = async (req, res, next) => {
   const { user, query } = req;
@@ -49,7 +49,8 @@ const create = async (req, res, next) => {
       writeApiKey: body.writeApiKey,
     });
     req.params['id'] = newChannel.id;
-    res.status(201).json(newChannel);
+    res.status(201);
+    next();
   } catch (err) {
     next(err);
   }
@@ -78,8 +79,8 @@ const pollHandler = async (req, res, next) => {
 const eventsHandler = (req, res, next) => {
   res.writeHead(200, sseResponseHeaders);
 
-  const client = { res };
-  clients.add(client);
+  const subscriber = { res };
+  subscribers.add(subscriber);
 
   const { user, params, query } = req;
   const controller = new AbortController();
@@ -87,7 +88,7 @@ const eventsHandler = (req, res, next) => {
   let lastEntryAt = query?.lastEntryAt;
   let channel;
 
-  const feedData = async () => {
+  const publish = async () => {
     try {
       if (!channel) {
         channel = await Channel.findOne({
@@ -117,13 +118,13 @@ const eventsHandler = (req, res, next) => {
       console.error(err);
     }
   };
-  const timer = setIntervalAsync(feedData, timeoutMs);
+  const timer = setIntervalAsync(publish, timeoutMs);
 
   req.on('close', async () => {
     controller.abort();
     await clearIntervalAsync(timer);
-    client.res.end();
-    clients.delete(client);
+    subscriber.res.end();
+    subscribers.delete(subscriber);
     console.log('Connection closed');
   });
 };
@@ -185,7 +186,7 @@ const bulkUpdate = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { user, params, body } = req;
-    const result = await Channel.updateOne(
+    await Channel.updateOne(
       {
         _id: params.id,
         user,
@@ -195,7 +196,7 @@ const update = async (req, res, next) => {
         writeApiKey: body.writeApiKey,
       }
     );
-    res.json(result);
+    next();
   } catch (err) {
     next(err);
   }

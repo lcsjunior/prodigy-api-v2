@@ -1,10 +1,10 @@
 const { validationResult } = require('express-validator');
-const arrayHelper = require('../utils/array-helper');
+const _ = require('lodash');
 
 const validateAsync = (chain) => {
   return async (req, res, next) => {
     await Promise.all(
-      arrayHelper.wrap(chain).map((validation) => validation.run(req))
+      _.castArray(chain).map((validation) => validation.run(req))
     );
     const result = validationResult(req);
     const hasErrors = !result.isEmpty();

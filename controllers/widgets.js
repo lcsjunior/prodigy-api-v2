@@ -32,7 +32,8 @@ const create = async (req, res, next) => {
       })),
     });
     req.params['id'] = newWidget.id;
-    res.status(201).json(newWidget);
+    res.status(201);
+    next();
   } catch (err) {
     next(err);
   }
@@ -73,7 +74,7 @@ const bulkUpdate = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { query, params, body } = req;
-    const widget = await Widget.updateOne(
+    await Widget.updateOne(
       {
         _id: params.id,
         channel: query.chId,
@@ -84,7 +85,7 @@ const update = async (req, res, next) => {
         })),
       }
     );
-    res.json(widget);
+    next();
   } catch (err) {
     next(err);
   }

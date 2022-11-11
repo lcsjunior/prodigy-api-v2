@@ -21,7 +21,7 @@ router.post(
   '/',
   isAuthenticated,
   validateAsync(body('channelId').isInt().toInt()),
-  create
+  [create, show]
 );
 
 router.get(
@@ -54,12 +54,10 @@ router.get(
 
 router.patch('/bulk', isAuthenticated, bulkUpdate);
 
-router.patch(
-  '/:id',
-  isAuthenticated,
-  validateAsync(param('id').isMongoId()),
-  update
-);
+router.patch('/:id', isAuthenticated, validateAsync(param('id').isMongoId()), [
+  update,
+  show,
+]);
 
 router.delete(
   '/:id',
