@@ -32,8 +32,10 @@ const isOwnerChannel = async (req, res, next) => {
 const list = async (req, res, next) => {
   try {
     const { user } = req;
-    let channels = await Channel.find({ user }).sort('sortOrder').lean();
-    channels = await retrieveChannelData(channels);
+    let channels = await Channel.find({ user }).sort('sortOrder');
+    channels = await retrieveChannelData(
+      channels.map((channel) => channel.toJSON())
+    );
     res.json(channels);
   } catch (err) {
     next(err);
@@ -52,8 +54,9 @@ const create = async (req, res, next) => {
     let channel = await Channel.findOne({
       _id: newChannel.id,
       user,
-    }).lean();
-    [channel] = await retrieveChannelData([channel]);
+    });
+    const channelJson = channel.toJSON();
+    [channel] = await retrieveChannelData([channelJson]);
     const type = await WidgetType.findBySlug('time-series');
     const widgets = channelHelpers
       .getArrayOfFields(channel.data)
@@ -80,9 +83,10 @@ const pollHandler = async (req, res, next) => {
     let channel = await Channel.findOne({
       _id: params.id,
       user,
-    }).lean();
+    });
     if (channel) {
-      [channel] = await retrieveChannelFeeds([channel], {
+      const channelJson = channel.toJSON();
+      [channel] = await retrieveChannelFeeds([channelJson], {
         start: query?.lastEntryAt,
       });
       return res.json(channel.feeds);
@@ -104,30 +108,31 @@ const eventsHandler = (req, res, next) => {
   const controller = new AbortController();
   const timeoutMs = 5000;
   let lastEntryAt = query?.lastEntryAt;
-  let channel;
+  let channelJson;
 
   const publish = async () => {
     try {
-      if (!channel) {
-        channel = await Channel.findOne({
+      if (!channelJson) {
+        const channel = await Channel.findOne({
           _id: params.id,
           user,
-        }).lean();
+        });
+        channelJson = channel.toJSON();
       }
-      if (channel) {
-        [channel] = await retrieveChannelFeeds(
-          [channel],
+      if (channelJson) {
+        [channelJson] = await retrieveChannelFeeds(
+          [channelJson],
           {
             start: lastEntryAt,
           },
           controller
         );
-        if (channel?.feeds && channel.feeds.length > 0) {
+        if (channelJson?.feeds && channelJson.feeds.length > 0) {
           lastEntryAt = addSeconds(
-            _.maxBy(channel.feeds, 'created_at').created_at,
+            _.maxBy(channelJson.feeds, 'created_at').created_at,
             1
           );
-          const strJson = JSON.stringify(channel.feeds);
+          const strJson = JSON.stringify(channelJson.feeds);
           const data = `data: ${strJson}\n\n`;
           res.write(data);
         }
@@ -153,11 +158,12 @@ const showDashboard = async (req, res, next) => {
     let channel = await Channel.findOne({
       _id: params.id,
       user,
-    }).lean();
+    });
     if (channel) {
+      const channelJson = channel.toJSON();
       const results = await Promise.all([
-        retrieveChannelDataAndLastEntry([channel]),
-        retrieveChannelFeeds([channel]),
+        retrieveChannelDataAndLastEntry([channelJson]),
+        retrieveChannelFeeds([channelJson]),
       ]);
       [channel] = results[0];
       channel = { ...channel, feeds: results[1][0].feeds };
@@ -176,9 +182,10 @@ const show = async (req, res, next) => {
     let channel = await Channel.findOne({
       _id: params.id,
       user,
-    }).lean();
+    });
     if (channel) {
-      [channel] = await retrieveChannelData([channel]);
+      const channelJson = channel.toJSON();
+      [channel] = await retrieveChannelData([channelJson]);
       return res.json(channel);
     } else {
       res.sendStatus(204);
@@ -204,14 +211,16 @@ const bulkUpdate = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { user, params, body } = req;
-    await Channel.updateOne(
+    await Channel.findOneAndUpdate(
       {
         _id: params.id,
         user,
       },
       {
-        readApiKey: body.readApiKey,
-        writeApiKey: body.writeApiKey,
+        $set: {
+          readApiKey: body.readApiKey,
+          writeApiKey: body.writeApiKey,
+        },
       }
     );
     next();

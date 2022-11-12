@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const Widget = require('./Widget');
+const mongooseFieldEncryption =
+  require('mongoose-field-encryption').fieldEncryption;
 const SchemaTypes = mongoose.Schema.Types;
 
 const channelSchema = new mongoose.Schema(
@@ -13,6 +15,11 @@ const channelSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+channelSchema.plugin(mongooseFieldEncryption, {
+  fields: ['readApiKey', 'writeApiKey'],
+  secret: process.env.SESSION_SECRET,
+});
 
 channelSchema.pre('save', async function (next) {
   const channel = this;
@@ -30,13 +37,6 @@ channelSchema.pre('deleteOne', async function (next) {
   const deletedData = await Channel.find(this._conditions).lean();
   await Widget.deleteMany({ user: { $in: deletedData } });
   next();
-});
-
-channelSchema.set('toJSON', {
-  transform: (doc, ret, opt) => {
-    delete ret['readApiKey'];
-    delete ret['writeApiKey'];
-  },
 });
 
 const Channel = mongoose.model('Channel', channelSchema);

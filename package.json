@@ -29,6 +29,7 @@
     "lodash": "^4.17.21",
     "minimist": "^1.2.7",
     "mongoose": "6.7.1",
+    "mongoose-field-encryption": "^5.0.2",
     "morgan": "~1.9.1",
     "papaparse": "^5.3.2",
     "passport": "^0.6.0",
