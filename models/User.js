@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Channel = require('./Channel');
 const bcrypt = require('bcrypt');
+const initials = require('initials');
 
 const saltRounds = 10;
 
@@ -22,16 +23,24 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+const getFullName = (firstName, lastName) =>
+  `${firstName || ''} ${lastName || ''}`.trim();
+
 userSchema
   .virtual('fullName')
   .get(function () {
-    return `${this.firstName || ''} ${this.lastName || ''}`.trim();
+    return getFullName(this.firstName, this.lastName);
   })
   .set(function (v) {
     const firstName = v.substring(0, v.indexOf(' '));
     const lastName = v.substring(v.indexOf(' ') + 1);
     this.set({ firstName, lastName });
   });
+
+userSchema.virtual('initials').get(function () {
+  const fullName = getFullName(this.firstName, this.lastName);
+  return initials(fullName || this.username);
+});
 
 userSchema.pre('save', async function (next) {
   const user = this;

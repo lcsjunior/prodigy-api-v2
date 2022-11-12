@@ -34,8 +34,8 @@ const seedWidgetTypes = [
     sortOrder: 1,
   },
   {
-    name: 'Gauge',
-    slug: 'gauge',
+    name: 'Display',
+    slug: 'display',
     sortOrder: 2,
   },
 ];
