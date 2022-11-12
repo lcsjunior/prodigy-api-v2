@@ -3,10 +3,11 @@ const {
   retrieveChannelFeeds,
   retrieveChannelDataAndLastEntry,
 } = require('../libs/thingspeak-api');
-const { Channel } = require('../models');
+const { Channel, WidgetType, Widget } = require('../models');
 const _ = require('lodash');
 const { addSeconds } = require('date-fns');
 const { setIntervalAsync, clearIntervalAsync } = require('set-interval-async');
+const channelHelpers = require('../utils/channel-helpers');
 
 const sseResponseHeaders = {
   'Content-Type': 'text/event-stream',
@@ -48,9 +49,26 @@ const create = async (req, res, next) => {
       readApiKey: body.readApiKey,
       writeApiKey: body.writeApiKey,
     });
-    req.params['id'] = newChannel.id;
-    res.status(201);
-    next();
+    let channel = await Channel.findOne({
+      _id: newChannel.id,
+      user,
+    }).lean();
+    [channel] = await retrieveChannelData([channel]);
+    const type = await WidgetType.findBySlug('time-series');
+    const widgets = channelHelpers
+      .getArrayOfFields(channel.data)
+      .map((field) => ({
+        channel: channel._id,
+        type: type,
+        sortOrder: field.id,
+        fields: [
+          {
+            id: field.id,
+          },
+        ],
+      }));
+    await Widget.insertMany(widgets);
+    res.status(201).json(channel);
   } catch (err) {
     next(err);
   }

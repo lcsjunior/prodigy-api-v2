@@ -6,8 +6,12 @@ const widgetTypeSchema = new mongoose.Schema(
     slug: String,
     sortOrder: Number,
   },
-  { timestamps: true }
+  { timestamps: false }
 );
+
+widgetTypeSchema.statics.findBySlug = async function (slug) {
+  return this.findOne({ slug });
+};
 
 const WidgetType = mongoose.model('WidgetType', widgetTypeSchema);
 module.exports = WidgetType;
