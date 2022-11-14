@@ -8,6 +8,7 @@ const _ = require('lodash');
 const { addSeconds } = require('date-fns');
 const { setIntervalAsync, clearIntervalAsync } = require('set-interval-async');
 const channelHelpers = require('../utils/channel-helpers');
+const dateTimeHelpers = require('../utils/datetime-helpers');
 
 const sseResponseHeaders = {
   'Content-Type': 'text/event-stream',
@@ -104,6 +105,12 @@ const eventsHandler = (req, res, next) => {
   const subscriber = { res };
   subscribers.add(subscriber);
 
+  res.write(
+    `data: ${JSON.stringify({
+      ts: dateTimeHelpers.getTimestampInSeconds(),
+    })}\n\n`
+  );
+
   const { user, params, query } = req;
   const controller = new AbortController();
   const timeoutMs = 5000;
@@ -132,9 +139,8 @@ const eventsHandler = (req, res, next) => {
             _.maxBy(channelJson.feeds, 'created_at').created_at,
             1
           );
-          const strJson = JSON.stringify(channelJson.feeds);
-          const data = `data: ${strJson}\n\n`;
-          res.write(data);
+          res.write('event: feed\n');
+          res.write(`data: ${JSON.stringify(channelJson.feeds)}\n\n`);
         }
       }
     } catch (err) {
