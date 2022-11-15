@@ -27,7 +27,11 @@ router.get(
 router.post(
   '/',
   isAuthenticated,
-  validateAsync([query('chId').isMongoId(), body('type').not().isEmpty()]),
+  validateAsync([
+    query('chId').isMongoId(),
+    body('type').not().isEmpty(),
+    body('decimalPlaces').optional({ nullable: true }).toInt(),
+  ]),
   isOwnerChannel,
   [create, show]
 );
@@ -35,7 +39,11 @@ router.post(
 router.get(
   '/:id',
   isAuthenticated,
-  validateAsync([param('id').isMongoId(), query('chId').isMongoId()]),
+  validateAsync([
+    param('id').isMongoId(),
+    query('chId').isMongoId(),
+    body('decimalPlaces').optional({ nullable: true }).toInt(),
+  ]),
   isOwnerChannel,
   show
 );
