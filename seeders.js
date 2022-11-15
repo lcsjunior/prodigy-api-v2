@@ -29,13 +29,13 @@ const seedChannels = [
 
 const seedWidgetTypes = [
   {
-    name: 'Time series',
-    slug: 'time-series',
+    name: 'Display',
+    slug: 'display',
     sortOrder: 1,
   },
   {
-    name: 'Display',
-    slug: 'display',
+    name: 'Time series',
+    slug: 'time-series',
     sortOrder: 2,
   },
 ];

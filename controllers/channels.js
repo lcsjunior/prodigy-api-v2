@@ -170,7 +170,8 @@ const showDashboard = async (req, res, next) => {
       const results = await Promise.all([
         retrieveChannelDataAndLastEntry([channelJson]),
         retrieveChannelFeeds([channelJson], {
-          results: 200
+          results: 4000,
+          timescale: 10,
         }),
       ]);
       [channel] = results[0];
