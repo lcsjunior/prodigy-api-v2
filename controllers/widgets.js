@@ -29,7 +29,15 @@ const create = async (req, res, next) => {
       type: body.type,
       fields: body.fields.map((field) => ({
         id: field.id,
+        color: field.color,
+        decimalPlaces: field.decimalPlaces,
       })),
+      displayName: body.displayName,
+      unit: body.unit,
+      boolValue0: body.boolValue0,
+      boolValue1: body.boolValue1,
+      rangeMin: body.rangeMin,
+      rangeMax: body.rangeMax,
     });
     req.params['id'] = newWidget.id;
     res.status(201);
@@ -82,7 +90,15 @@ const update = async (req, res, next) => {
       {
         fields: body.fields.map((field) => ({
           id: field.id,
+          color: field.color,
+          decimalPlaces: field.decimalPlaces,
         })),
+        displayName: body.displayName,
+        unit: body.unit,
+        boolValue0: body.boolValue0,
+        boolValue1: body.boolValue1,
+        rangeMin: body.rangeMin,
+        rangeMax: body.rangeMax,
       }
     );
     next();

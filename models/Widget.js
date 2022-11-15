@@ -8,6 +8,8 @@ const fieldSchema = new mongoose.Schema(
       min: 1,
       max: 8,
     },
+    color: String,
+    decimalPlaces: Number,
   },
   {
     timestamps: false,
@@ -28,6 +30,12 @@ const widgetSchema = new mongoose.Schema(
     type: { type: SchemaTypes.ObjectId, ref: 'WidgetType', required: true },
     fields: [fieldSchema],
     sortOrder: Number,
+    displayName: String,
+    unit: String,
+    boolValue0: String,
+    boolValue1: String,
+    rangeMin: Number,
+    rangeMax: Number,
   },
   { timestamps: true }
 );

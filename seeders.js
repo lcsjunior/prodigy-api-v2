@@ -45,6 +45,7 @@ const seedWidgetTypes = [
     // npm run seed -- -d
     if (argv.d) {
       await Widget.deleteMany({});
+      await WidgetType.deleteMany({});
       await Channel.deleteMany({});
       await User.deleteMany({});
     }
