@@ -36,6 +36,8 @@ const create = async (req, res, next) => {
       unit: body.unit,
       boolValue0: body.boolValue0,
       boolValue1: body.boolValue1,
+      color: body.color,
+      decimalPlaces: body.decimalPlaces,
       rangeMin: body.rangeMin,
       rangeMax: body.rangeMax,
     });
@@ -97,6 +99,8 @@ const update = async (req, res, next) => {
         unit: body.unit,
         boolValue0: body.boolValue0,
         boolValue1: body.boolValue1,
+        color: body.color,
+        decimalPlaces: body.decimalPlaces,
         rangeMin: body.rangeMin,
         rangeMax: body.rangeMax,
       }

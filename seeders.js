@@ -38,6 +38,21 @@ const seedWidgetTypes = [
     slug: 'time-series',
     sortOrder: 2,
   },
+  {
+    name: 'Light bulb',
+    slug: 'bulb',
+    sortOrder: 3,
+  },
+  {
+    name: 'Toggle switch',
+    slug: 'switch',
+    sortOrder: 4,
+  },
+  {
+    name: 'Float field',
+    slug: 'float',
+    sortOrder: 5,
+  },
 ];
 
 (async () => {

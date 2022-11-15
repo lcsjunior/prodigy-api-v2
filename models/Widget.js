@@ -34,6 +34,8 @@ const widgetSchema = new mongoose.Schema(
     unit: String,
     boolValue0: String,
     boolValue1: String,
+    color: String,
+    decimalPlaces: Number,
     rangeMin: Number,
     rangeMax: Number,
   },
