@@ -51,6 +51,7 @@ const create = async (req, res, next) => {
       channelId: body.channelId,
       readApiKey: body.readApiKey,
       writeApiKey: body.writeApiKey,
+      displayName: body.displayName,
     });
     let channel = await Channel.findOne({
       _id: newChannel.id,
@@ -229,6 +230,7 @@ const update = async (req, res, next) => {
         $set: {
           readApiKey: body.readApiKey,
           writeApiKey: body.writeApiKey,
+          displayName: body.displayName,
         },
       }
     );
