@@ -16,6 +16,14 @@ const seedUsers = [
     lastName: 'Admin',
     role: 'sa',
   },
+  {
+    email: 'lc@prodigyio.com',
+    username: 'luizcarlos',
+    password: process.env.SA_PASS,
+    firstName: 'Luiz',
+    lastName: 'Carlos',
+    role: 'user',
+  },
 ];
 
 const seedChannels = [
