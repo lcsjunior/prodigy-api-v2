@@ -36,7 +36,7 @@ channelSchema.pre('save', async function (next) {
 
 channelSchema.pre('deleteOne', async function (next) {
   const deletedData = await Channel.find(this._conditions).lean();
-  await Widget.deleteMany({ user: { $in: deletedData } });
+  await Widget.deleteMany({ channel: { $in: deletedData } });
   next();
 });
 
